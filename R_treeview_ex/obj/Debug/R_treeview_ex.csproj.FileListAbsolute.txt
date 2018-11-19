@@ -1,0 +1,17 @@
+C:\Work\VS_projects\Projects\R_treeview_ex\R_treeview_ex\bin\Debug\R_treeview_ex.exe.config
+C:\Work\VS_projects\Projects\R_treeview_ex\R_treeview_ex\bin\Debug\R_treeview_ex.exe
+C:\Work\VS_projects\Projects\R_treeview_ex\R_treeview_ex\bin\Debug\R_treeview_ex.pdb
+C:\Work\VS_projects\Projects\R_treeview_ex\R_treeview_ex\bin\Debug\DynamicInterop.dll
+C:\Work\VS_projects\Projects\R_treeview_ex\R_treeview_ex\bin\Debug\RDotNet.dll
+C:\Work\VS_projects\Projects\R_treeview_ex\R_treeview_ex\bin\Debug\RDotNet.NativeLibrary.dll
+C:\Work\VS_projects\Projects\R_treeview_ex\R_treeview_ex\bin\Debug\DynamicInterop.xml
+C:\Work\VS_projects\Projects\R_treeview_ex\R_treeview_ex\bin\Debug\RDotNet.xml
+C:\Work\VS_projects\Projects\R_treeview_ex\R_treeview_ex\bin\Debug\RDotNet.NativeLibrary.xml
+C:\Work\VS_projects\Projects\R_treeview_ex\R_treeview_ex\obj\Debug\R_treeview_ex.csprojResolveAssemblyReference.cache
+C:\Work\VS_projects\Projects\R_treeview_ex\R_treeview_ex\obj\Debug\R_treeview_ex.R_Treeview.resources
+C:\Work\VS_projects\Projects\R_treeview_ex\R_treeview_ex\obj\Debug\R_treeview_ex.Properties.Resources.resources
+C:\Work\VS_projects\Projects\R_treeview_ex\R_treeview_ex\obj\Debug\R_treeview_ex.csproj.GenerateResource.Cache
+C:\Work\VS_projects\Projects\R_treeview_ex\R_treeview_ex\obj\Debug\R_treeview_ex.exe
+C:\Work\VS_projects\Projects\R_treeview_ex\R_treeview_ex\obj\Debug\R_treeview_ex.pdb
+C:\Work\VS_projects\Projects\R_treeview_ex\R_treeview_ex\bin\Debug\CsvHelper.dll
+C:\Work\VS_projects\Projects\R_treeview_ex\R_treeview_ex\bin\Debug\CsvHelper.xml
