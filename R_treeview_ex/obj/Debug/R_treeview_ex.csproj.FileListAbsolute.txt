@@ -13,5 +13,3 @@ C:\Work\VS_projects\Projects\R_treeview_ex\R_treeview_ex\obj\Debug\R_treeview_ex
 C:\Work\VS_projects\Projects\R_treeview_ex\R_treeview_ex\obj\Debug\R_treeview_ex.csproj.GenerateResource.Cache
 C:\Work\VS_projects\Projects\R_treeview_ex\R_treeview_ex\obj\Debug\R_treeview_ex.exe
 C:\Work\VS_projects\Projects\R_treeview_ex\R_treeview_ex\obj\Debug\R_treeview_ex.pdb
-C:\Work\VS_projects\Projects\R_treeview_ex\R_treeview_ex\bin\Debug\CsvHelper.dll
-C:\Work\VS_projects\Projects\R_treeview_ex\R_treeview_ex\bin\Debug\CsvHelper.xml

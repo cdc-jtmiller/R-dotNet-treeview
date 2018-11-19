@@ -69,6 +69,12 @@ namespace R_treeview_ex
                 MyFunctions._engine.Evaluate("dataset<-read.csv(file.choose(), sep = ',', stringsAsFactors = FALSE)");
                 DataFrame df = MyFunctions._engine.Evaluate("dataset").AsDataFrame();
 
+                //btnChooseFileNet.Enabled = false;
+                dataGridView1.DataSource = null;
+                dataGridView1.Rows.Clear();
+                dataGridView1.Columns.Clear();
+                dataGridView1.Refresh();
+
                 for (int i = 0; i < df.ColumnCount; ++i)
                 {
                     dataGridView1.ColumnCount++;
@@ -155,11 +161,16 @@ namespace R_treeview_ex
             try
             {
                 string strFileNameNet = "";
+                dataGridView1.DataSource = null;
+                dataGridView1.Rows.Clear();
+                dataGridView1.Columns.Clear();
+                dataGridView1.Refresh();
                 OpenFileDialog dialogNet = new OpenFileDialog() ;
                 dialogNet.Title = "Open CSV file";
                 dialogNet.Filter = "CSV Files (*.csv)|*.csv";
                 if (dialogNet.ShowDialog() == DialogResult.OK)
                 {
+                    //btnChooseFileR.Enabled = false;
                     strFileNameNet = dialogNet.FileName;
                     using (StreamReader sr = new StreamReader(strFileNameNet))
                     {
@@ -167,7 +178,7 @@ namespace R_treeview_ex
                         string[] headers = sr.ReadLine().Split(',');
                         for (int i = 0; i < headers.Count(); i++)
                         {
-                            netData.Columns.Add();
+                            netData.Columns.Add(headers[i]);
                         }
                         while (!sr.EndOfStream)
                         {
@@ -178,9 +189,10 @@ namespace R_treeview_ex
                                 dr[i] = rows[i];
                             }
                             netData.Rows.Add(dr);
-                            Globals.strDAM = ".Net";
                         }
+                    dataGridView1.DataSource = netData;
                     }
+
                 }
                 else
                 {
@@ -194,6 +206,34 @@ namespace R_treeview_ex
         }
     }
 
+    public static DataFrame ConvertDataTable(DataTable dt)
+    {
+        //REngine.SetEnvironmentVariables();
+        //REngine engine = REngine.GetInstance();
+        double?[,] stringData = new double?[dt.Rows.Count, dt.Columns.Count];
+        DataFrame df = MyFunctions._engine.Evaluate("df=NULL").AsDataFrame();
+        int irow = 0;
+        foreach (DataRow row in dt.Rows)
+        {
+            NumericVector x = MyFunctions._engine.Evaluate("x=NULL").AsNumeric();
+            int icol = 0;
+            foreach (DataColumn col in dt.Columns)
+            {
+                if (row.Field<double?>(col) == null)
+                {
+                    x = MyFunctions._engine.Evaluate("x=c(x, NA) ").AsNumeric();
+                }
+                else
+                {
+                    x = MyFunctions._engine.Evaluate("x=c(x, " + row.Field<double?>(col) + ") ").AsNumeric();
+                }
+                icol++;
+            }
+            df = MyFunctions._engine.Evaluate("df= as.data.frame(rbind(df,x)) ").AsDataFrame();
+            irow++;
+        }
+        return (df);
+    }
 
     public static class MyFunctions
     {
@@ -239,11 +279,6 @@ namespace R_treeview_ex
         {
             get { return Encoding.UTF8; }
         }
-    }
-
-    public static class Globals
-    {
-        public static string strDAM = "UNK";
     }
 
 }
