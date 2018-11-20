@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Collections;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Forms;
 using System.Collections.Generic;
@@ -191,6 +193,7 @@ namespace R_treeview_ex
                             netData.Rows.Add(dr);
                         }
                     dataGridView1.DataSource = netData;
+                    ConvertDataTable(netData);
                     }
 
                 }
@@ -204,36 +207,62 @@ namespace R_treeview_ex
                 Console.WriteLine("Error loading data using .Net: " + ex.Message);
             }
         }
+
+        public static DataFrame ConvertDataTable(DataTable dt)
+        {
+            //DataFrame df = null;
+            DataFrame df = MyFunctions._engine.Evaluate("df=NULL").AsDataFrame();
+
+            IEnumerable[] columns = new IEnumerable[dt.Columns.Count];
+            string[] columnNames = dt.Columns.Cast<DataColumn>()
+                                   .Select(x => x.ColumnName)
+                                   .ToArray();
+
+            for (int i = 0; i < dt.Columns.Count; i++)
+            {
+                switch (Type.GetTypeCode(dt.Columns[i].DataType))
+                {
+                    case TypeCode.String:
+                        columns[i] = dt.Rows.Cast<DataRow>().Select(row => row.Field<string>(i)).ToArray();
+                        break;
+
+                    case TypeCode.Double:
+                        columns[i] = dt.Rows.Cast<DataRow>().Select(row => row.Field<double>(i)).ToArray();
+                        break;
+
+                    case TypeCode.Int32:
+                        columns[i] = dt.Rows.Cast<DataRow>().Select(row => row.Field<int>(i)).ToArray();
+                        break;
+
+                    //case TypeCode.Decimal:
+                    //    IEnumerable array = dt.Rows.Cast<DataRow>().Select(row => row.Field<object>(i)).ToArray();
+
+                    case TypeCode.Int64:
+                        columns[i] = dt.Rows.Cast<DataRow>().Select(row => row.Field<long>(i)).ToArray();
+                        break;
+
+                    default:
+                        //columns[i] = dt.Rows.Cast<DataRow>().Select(row => row[i]).ToArray();
+                        throw new InvalidOperationException(String.Format("Type {0} is not supported", dt.Columns[i].DataType.Name));
+
+                        //columns[i] = dt.Rows.Cast<DataRow>().Select(row => row.Field<long>(i)).ToArray();
+                        //columns[i] = dt.Rows.Cast<DataRow>().Select(row => row.Field<decimal>(i)).ToArray();
+                        columns[i] = dt.Rows.Cast<DataRow>().Select(row => row[i]).ToArray();
+
+
+                        //columns[i] = ListToIenumerable(array);
+                        break;
+
+                }
+            }
+
+            df = MyFunctions._engine.CreateDataFrame(columns: columns, columnNames: columnNames, stringsAsFactors: false);
+            MyFunctions._engine.SetSymbol("netData", df);
+
+            return df;
+        }
     }
 
-    public static DataFrame ConvertDataTable(DataTable dt)
-    {
-        //REngine.SetEnvironmentVariables();
-        //REngine engine = REngine.GetInstance();
-        double?[,] stringData = new double?[dt.Rows.Count, dt.Columns.Count];
-        DataFrame df = MyFunctions._engine.Evaluate("df=NULL").AsDataFrame();
-        int irow = 0;
-        foreach (DataRow row in dt.Rows)
-        {
-            NumericVector x = MyFunctions._engine.Evaluate("x=NULL").AsNumeric();
-            int icol = 0;
-            foreach (DataColumn col in dt.Columns)
-            {
-                if (row.Field<double?>(col) == null)
-                {
-                    x = MyFunctions._engine.Evaluate("x=c(x, NA) ").AsNumeric();
-                }
-                else
-                {
-                    x = MyFunctions._engine.Evaluate("x=c(x, " + row.Field<double?>(col) + ") ").AsNumeric();
-                }
-                icol++;
-            }
-            df = MyFunctions._engine.Evaluate("df= as.data.frame(rbind(df,x)) ").AsDataFrame();
-            irow++;
-        }
-        return (df);
-    }
 
     public static class MyFunctions
     {
