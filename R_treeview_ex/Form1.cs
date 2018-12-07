@@ -1,16 +1,13 @@
 ﻿using System;
 using System.IO;
 using System.Collections;
-using System.Globalization;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Forms;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Drawing;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using RDotNet;
 using RDotNet.NativeLibrary;
 
@@ -90,7 +87,10 @@ namespace R_treeview_ex
 
                     for (int k = 0; k < df.ColumnCount; ++k)
                     {
-                        dataGridView1[k, i].Value = df[i, k];
+                        if (df[i, k] != null)
+                        {
+                            dataGridView1[k, i].Value = df[i, k];
+                        }
                     }
                 }
             }
@@ -132,6 +132,7 @@ namespace R_treeview_ex
 
         private void btnSubmit_Click(object sender, EventArgs e)
         {
+            tabControl1.SelectedIndex = 1;  // Sets focus to the log tab
             try
             {
                 SymbolicExpression expression = MyFunctions._engine.Evaluate(tbCode.Text.Trim());
@@ -141,7 +142,7 @@ namespace R_treeview_ex
 
                 foreach (var sSubmitThis in vector)
                 {
-                    
+
                     {
                         Console.WriteLine(sSubmitThis);
                         tabControl1.SelectedIndex = 1;
@@ -162,25 +163,25 @@ namespace R_treeview_ex
         {
             try
             {
-                string strFileNameNet = "";
+                string sFileNameNet = "";
                 dataGridView1.DataSource = null;
                 dataGridView1.Rows.Clear();
                 dataGridView1.Columns.Clear();
                 dataGridView1.Refresh();
-                OpenFileDialog dialogNet = new OpenFileDialog() ;
+                OpenFileDialog dialogNet = new OpenFileDialog();
                 dialogNet.Title = "Open CSV file";
                 dialogNet.Filter = "CSV Files (*.csv)|*.csv";
                 if (dialogNet.ShowDialog() == DialogResult.OK)
                 {
                     //btnChooseFileR.Enabled = false;
-                    strFileNameNet = dialogNet.FileName;
-                    using (StreamReader sr = new StreamReader(strFileNameNet))
+                    sFileNameNet = dialogNet.FileName;
+                    using (StreamReader sr = new StreamReader(sFileNameNet))
                     {
                         DataTable netData = new DataTable();
                         string[] headers = sr.ReadLine().Split(',');
                         for (int i = 0; i < headers.Count(); i++)
                         {
-                            netData.Columns.Add(headers[i]);
+                            netData.Columns.Add(headers[i], typeof(string));
                         }
                         while (!sr.EndOfStream)
                         {
@@ -192,10 +193,9 @@ namespace R_treeview_ex
                             }
                             netData.Rows.Add(dr);
                         }
-                    dataGridView1.DataSource = netData;
-                    ConvertDataTable(netData);
+                        dataGridView1.DataSource = netData;
+                        ConvertDataTable(netData);
                     }
-
                 }
                 else
                 {
@@ -208,6 +208,7 @@ namespace R_treeview_ex
             }
         }
 
+
         public static DataFrame ConvertDataTable(DataTable dt)
         {
             //DataFrame df = null;
@@ -218,48 +219,68 @@ namespace R_treeview_ex
                                    .Select(x => x.ColumnName)
                                    .ToArray();
 
+
             for (int i = 0; i < dt.Columns.Count; i++)
             {
                 switch (Type.GetTypeCode(dt.Columns[i].DataType))
                 {
                     case TypeCode.String:
-                        columns[i] = dt.Rows.Cast<DataRow>().Select(row => row.Field<string>(i)).ToArray();
+                        //columns[i] = dt.Rows.Cast<DataRow>().Select(row => row.Field<string>(i)).ToArray();
+                        columns[i] = dt.Rows.Cast<DataRow>()
+                            .Select(row => row.Field<string>(i).Replace("\"", string.Empty))
+                            .ToArray();
+                        Console.WriteLine(dt.Rows.Cast<DataRow>().Select(row => row.Field<string>(i).ToString()));
                         break;
 
                     case TypeCode.Double:
-                        columns[i] = dt.Rows.Cast<DataRow>().Select(row => row.Field<double>(i)).ToArray();
+                        columns[i] = dt.Rows.Cast<DataRow>()
+                            .Select(row => row.Field<double>(i))
+                            .ToArray();
                         break;
 
                     case TypeCode.Int32:
-                        columns[i] = dt.Rows.Cast<DataRow>().Select(row => row.Field<int>(i)).ToArray();
+                        columns[i] = dt.Rows.Cast<DataRow>()
+                            .Select(row => row.Field<int>(i))
+                            .ToArray();
                         break;
 
                     //case TypeCode.Decimal:
                     //    IEnumerable array = dt.Rows.Cast<DataRow>().Select(row => row.Field<object>(i)).ToArray();
 
                     case TypeCode.Int64:
-                        columns[i] = dt.Rows.Cast<DataRow>().Select(row => row.Field<long>(i)).ToArray();
+                        columns[i] = dt.Rows.Cast<DataRow>()
+                            .Select(row => row.Field<long>(i))
+                            .ToArray();
                         break;
 
-                    default:
-                        //columns[i] = dt.Rows.Cast<DataRow>().Select(row => row[i]).ToArray();
-                        throw new InvalidOperationException(String.Format("Type {0} is not supported", dt.Columns[i].DataType.Name));
+                    //default:
+                    //    //columns[i] = dt.Rows.Cast<DataRow>().Select(row => row[i]).ToArray();
+                    //    throw new InvalidOperationException(String.Format("Type {0} is not supported", dt.Columns[i].DataType.Name));
 
-                        //columns[i] = dt.Rows.Cast<DataRow>().Select(row => row.Field<long>(i)).ToArray();
-                        //columns[i] = dt.Rows.Cast<DataRow>().Select(row => row.Field<decimal>(i)).ToArray();
-                        columns[i] = dt.Rows.Cast<DataRow>().Select(row => row[i]).ToArray();
+                    //    //columns[i] = dt.Rows.Cast<DataRow>().Select(row => row.Field<long>(i)).ToArray();
+                    //    //columns[i] = dt.Rows.Cast<DataRow>().Select(row => row.Field<decimal>(i)).ToArray();
+                    //    columns[i] = dt.Rows.Cast<DataRow>().Select(row => row[i]).ToArray();
 
 
-                        //columns[i] = ListToIenumerable(array);
-                        break;
+                    //    //columns[i] = ListToIenumerable(array);
+                    //    break;
 
                 }
             }
 
-            df = MyFunctions._engine.CreateDataFrame(columns: columns, columnNames: columnNames, stringsAsFactors: false);
-            MyFunctions._engine.SetSymbol("netData", df);
+            try
+            {
+                df = MyFunctions._engine.CreateDataFrame(columns: columns, columnNames: columnNames, stringsAsFactors: false);
+                MyFunctions._engine.SetSymbol("ds", df);
+
+            }
+            catch  (Exception ex)
+            {
+                Console.WriteLine("Error creating dataframe: " + ex.Message);
+            }
 
             return df;
+
         }
     }
 
@@ -308,6 +329,6 @@ namespace R_treeview_ex
         {
             get { return Encoding.UTF8; }
         }
-    }
 
+    }
 }
