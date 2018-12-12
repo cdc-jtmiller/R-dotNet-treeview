@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Windows;
 using System.Windows.Forms;
 using System.Data;
@@ -15,10 +16,8 @@ using RDotNet.NativeLibrary;
 
 namespace R_treeview_ex
 {
-
     public partial class R_Treeview : Form
     {
-
         public R_Treeview()
         {
             InitializeComponent();
@@ -34,7 +33,7 @@ namespace R_treeview_ex
             MyFunctions.InitializeRDotNet();
 
             // Populate the treeview with 'Supplemental Path'
-            string folderPath = Path.GetFullPath(Path.Combine(Application.StartupPath, @"..\..\..\")) + @"User_library";
+            string folderPath = Path.GetFullPath(Path.Combine(Application.StartupPath, @"..\..\..\..\")) + @"User_library";
             ListDirectory(treeView1, folderPath);
             //ListDirectory(treeView1, @"C:\Work\VS_projects\Projects\R_treeview_ex\User_library");
 
@@ -167,7 +166,6 @@ namespace R_treeview_ex
 
         }
 
-
         private void btnChooseFileNet_Click(object sender, EventArgs e)
         {
             try
@@ -177,9 +175,13 @@ namespace R_treeview_ex
                 dataGridView1.Rows.Clear();
                 dataGridView1.Columns.Clear();
                 dataGridView1.Refresh();
-                OpenFileDialog dialogNet = new OpenFileDialog();
-                dialogNet.Title = "Open CSV file";
-                dialogNet.Filter = "CSV Files (*.csv)|*.csv";
+
+                OpenFileDialog dialogNet = new OpenFileDialog
+                {
+                    Title = "Open CSV file",
+                    Filter = "CSV Files (*.csv)|*.csv"
+                };
+
                 if (dialogNet.ShowDialog() == DialogResult.OK)
                 {
                     //btnChooseFileR.Enabled = false;
@@ -204,7 +206,7 @@ namespace R_treeview_ex
                         }
                         dataGridView1.DataSource = netData.AsDataView();
                         ConvertDataTable(netData);  //Method 1
-                        ConvertDT(netData);         //Method 2
+                        //ConvertDT(netData);         //Method 2
                     }
                 }
                 else
@@ -223,10 +225,12 @@ namespace R_treeview_ex
         // Converts the .Net datatable to an R dataframe
         // Method 1
         {
-            double?[,] stringData = new double?[tab.Rows.Count, tab.Columns.Count];
+            //double?[,] stringData = new double?[tab.Rows.Count, tab.Columns.Count];
+            //double?[,] result = (tab.Rows, tab.Columns).AsEnumerable()
+            //        .Select(row => Convert.ToDouble(row.Field<string>("column1"), System.Globalization.CultureInfo.InvariantCulture)).ToArray();
 
-            //DataFrame df = null;
-            DataFrame dframe = MyFunctions._engine.Evaluate("df=NULL").AsDataFrame();
+            //DataFrame dframe = null;
+            DataFrame dframe = MyFunctions._engine.Evaluate("dframe=NULL").AsDataFrame();
 
             int irow = 0;
             foreach (DataRow row in tab.Rows)
@@ -235,17 +239,25 @@ namespace R_treeview_ex
                 int icol = 0;
                 foreach (DataColumn col in tab.Columns)
                 {
-                    if (row.Field<double?>(col) == null)
+                    if (col.DataType.Equals(typeof(string)))
                     {
-                        x = MyFunctions._engine.Evaluate("x=c(x, NA) ").AsNumeric();
+                        object value = row[col];
+                        if (value.ToString() == "")
+                        {
+                            x = MyFunctions._engine.Evaluate("x=c(x, NA) ").AsNumeric();
+                        }
+                        else 
+                        {
+                            x = MyFunctions._engine.Evaluate("x = c(x, " + Math.Round(Convert.ToDouble(value), 5) + ") ").AsNumeric();
+                        }
                     }
                     else
                     {
-                        x = MyFunctions._engine.Evaluate("x=c(x, " + row.Field<double?>(col) + ") ").AsNumeric();
+                        x = MyFunctions._engine.Evaluate("x = c(x, " + row[col] + ") ").AsNumeric();
                     }
                     icol++;
                 }
-                dframe = MyFunctions._engine.Evaluate("df= as.data.frame(rbind(df,x)) ").AsDataFrame();
+                dframe = MyFunctions._engine.Evaluate("dframe= as.data.frame(rbind(dframe,x)) ").AsDataFrame();
                 irow++;
             }
 
