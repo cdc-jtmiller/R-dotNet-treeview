@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Reflection;
 using System.IO;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Forms;
@@ -16,6 +18,7 @@ namespace R_treeview_ex
 
     public partial class R_Treeview : Form
     {
+
         public R_Treeview()
         {
             InitializeComponent();
@@ -30,8 +33,11 @@ namespace R_treeview_ex
             // Initializes RDotNet
             MyFunctions.InitializeRDotNet();
 
-            // Populate the treeview
-            ListDirectory(treeView1, @"C:\Work\VS_projects\Projects\R_treeview_ex\User_library");
+            // Populate the treeview with 'Supplemental Path'
+            string folderPath = Path.GetFullPath(Path.Combine(Application.StartupPath, @"..\..\..\")) + @"User_library";
+            ListDirectory(treeView1, folderPath);
+            //ListDirectory(treeView1, @"C:\Work\VS_projects\Projects\R_treeview_ex\User_library");
+
         }
 
         // Used for treeview
@@ -40,6 +46,7 @@ namespace R_treeview_ex
             treeView.Nodes.Clear();
             var fileDirectory = new DirectoryInfo(path);
 
+
             treeView.Nodes.Add(CreateDirectory(fileDirectory));
         }
 
@@ -47,6 +54,7 @@ namespace R_treeview_ex
         private static TreeNode CreateDirectory(DirectoryInfo directoryInfo)
         {
             var directoryNode = new TreeNode(directoryInfo.Name);
+
             foreach (var directory in directoryInfo.GetDirectories())
             {
                 directoryNode.Nodes.Add(CreateDirectory(directory));
@@ -54,7 +62,10 @@ namespace R_treeview_ex
 
             foreach (var file in directoryInfo.GetFiles())
             {
-                directoryNode.Nodes.Add(new TreeNode(file.Name));
+                if (file.Extension.ToLower() == ".xml")
+                {
+                    directoryNode.Nodes.Add(new TreeNode(file.Name));
+                }
             }
 
             return directoryNode;
@@ -142,11 +153,9 @@ namespace R_treeview_ex
 
                 foreach (var sSubmitThis in vector)
                 {
-
                     {
                         Console.WriteLine(sSubmitThis);
                         tabControl1.SelectedIndex = 1;
-
                     }
                 }
             }
@@ -193,8 +202,9 @@ namespace R_treeview_ex
                             }
                             netData.Rows.Add(dr);
                         }
-                        dataGridView1.DataSource = netData;
-                        ConvertDataTable(netData);
+                        dataGridView1.DataSource = netData.AsDataView();
+                        ConvertDataTable(netData);  //Method 1
+                        ConvertDT(netData);         //Method 2
                     }
                 }
                 else
@@ -209,7 +219,45 @@ namespace R_treeview_ex
         }
 
 
-        public static DataFrame ConvertDataTable(DataTable dt)
+        public static DataFrame ConvertDataTable(DataTable tab)
+        // Converts the .Net datatable to an R dataframe
+        // Method 1
+        {
+            double?[,] stringData = new double?[tab.Rows.Count, tab.Columns.Count];
+
+            //DataFrame df = null;
+            DataFrame dframe = MyFunctions._engine.Evaluate("df=NULL").AsDataFrame();
+
+            int irow = 0;
+            foreach (DataRow row in tab.Rows)
+            {
+                NumericVector x = MyFunctions._engine.Evaluate("x=NULL").AsNumeric();
+                int icol = 0;
+                foreach (DataColumn col in tab.Columns)
+                {
+                    if (row.Field<double?>(col) == null)
+                    {
+                        x = MyFunctions._engine.Evaluate("x=c(x, NA) ").AsNumeric();
+                    }
+                    else
+                    {
+                        x = MyFunctions._engine.Evaluate("x=c(x, " + row.Field<double?>(col) + ") ").AsNumeric();
+                    }
+                    icol++;
+                }
+                dframe = MyFunctions._engine.Evaluate("df= as.data.frame(rbind(df,x)) ").AsDataFrame();
+                irow++;
+            }
+
+            MyFunctions._engine.SetSymbol("ds1", dframe);
+
+            return dframe;
+        }
+
+
+        public static DataFrame ConvertDT(DataTable dt)
+        // Converts the .Net datatable to an R dataframe
+        // Method 2
         {
             //DataFrame df = null;
             DataFrame df = MyFunctions._engine.Evaluate("df=NULL").AsDataFrame();
@@ -225,11 +273,9 @@ namespace R_treeview_ex
                 switch (Type.GetTypeCode(dt.Columns[i].DataType))
                 {
                     case TypeCode.String:
-                        //columns[i] = dt.Rows.Cast<DataRow>().Select(row => row.Field<string>(i)).ToArray();
                         columns[i] = dt.Rows.Cast<DataRow>()
                             .Select(row => row.Field<string>(i).Replace("\"", string.Empty))
                             .ToArray();
-                        Console.WriteLine(dt.Rows.Cast<DataRow>().Select(row => row.Field<string>(i).ToString()));
                         break;
 
                     case TypeCode.Double:
@@ -253,28 +299,26 @@ namespace R_treeview_ex
                             .ToArray();
                         break;
 
-                    //default:
-                    //    //columns[i] = dt.Rows.Cast<DataRow>().Select(row => row[i]).ToArray();
-                    //    throw new InvalidOperationException(String.Format("Type {0} is not supported", dt.Columns[i].DataType.Name));
+                    default:
+                        //columns[i] = dt.Rows.Cast<DataRow>().Select(row => row[i]).ToArray();
 
-                    //    //columns[i] = dt.Rows.Cast<DataRow>().Select(row => row.Field<long>(i)).ToArray();
-                    //    //columns[i] = dt.Rows.Cast<DataRow>().Select(row => row.Field<decimal>(i)).ToArray();
-                    //    columns[i] = dt.Rows.Cast<DataRow>().Select(row => row[i]).ToArray();
+                        //columns[i] = dt.Rows.Cast<DataRow>().Select(row => row.Field<long>(i)).ToArray();
+                        //columns[i] = dt.Rows.Cast<DataRow>().Select(row => row.Field<decimal>(i)).ToArray();
+                        columns[i] = dt.Rows.Cast<DataRow>().Select(row => row[i]).ToArray();
+                        //columns[i] = ListToIenumerable(array);
+                        break;
 
-
-                    //    //columns[i] = ListToIenumerable(array);
-                    //    break;
-
+                        throw new InvalidOperationException(String.Format("Type {0} is not supported", dt.Columns[i].DataType.Name));
                 }
             }
 
             try
             {
                 df = MyFunctions._engine.CreateDataFrame(columns: columns, columnNames: columnNames, stringsAsFactors: false);
-                MyFunctions._engine.SetSymbol("ds", df);
+                MyFunctions._engine.SetSymbol("ds2", df);
 
             }
-            catch  (Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine("Error creating dataframe: " + ex.Message);
             }
@@ -282,53 +326,52 @@ namespace R_treeview_ex
             return df;
 
         }
-    }
 
-
-    public static class MyFunctions
-    {
-        public static REngine _engine;
-
-        public static void InitializeRDotNet()
+        public static class MyFunctions
         {
-            try
+            public static REngine _engine;
+
+            public static void InitializeRDotNet()
             {
-                REngine.SetEnvironmentVariables();
-                _engine = REngine.GetInstance();
-                _engine.Initialize();
+                try
+                {
+                    REngine.SetEnvironmentVariables();
+                    _engine = REngine.GetInstance();
+                    _engine.Initialize();
+                }
+
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error using RDotNet: " + ex.Message);
+                }
+            }
+        }
+
+        public class ControlWriter : TextWriter
+        {
+            private Control textbox;
+            public ControlWriter(Control textbox)
+            {
+                this.textbox = textbox;
             }
 
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error using RDotNet: " + ex.Message);
-            }
-        }
-    }
-
-    public class ControlWriter : TextWriter
-    {
-        private Control textbox;
-        public ControlWriter(Control textbox)
-        {
-            this.textbox = textbox;
-        }
-
-        public override void Write(char value)
-        {
-            textbox.Text += value;
-        }
-
-        public override void Write(string value)
-        {
+            public override void Write(char value)
             {
                 textbox.Text += value;
             }
-        }
 
-        public override Encoding Encoding
-        {
-            get { return Encoding.UTF8; }
-        }
+            public override void Write(string value)
+            {
+                {
+                    textbox.Text += value;
+                }
+            }
 
+            public override Encoding Encoding
+            {
+                get { return Encoding.UTF8; }
+            }
+
+        }
     }
 }
