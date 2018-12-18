@@ -205,8 +205,10 @@ namespace R_treeview_ex
                             netData.Rows.Add(dr);
                         }
                         dataGridView1.DataSource = netData.AsDataView();
-                        ConvertDataTable(netData);  //Method 1
-                        //ConvertDT(netData);         //Method 2
+                        //ConvertDT(netData);    //Method 1
+                        //ConvertDT2(netData);   //Method 2
+                        //ConvertDT3(netData);   //Method 3
+                        ConvertDT4(netData);
                     }
                 }
                 else
@@ -220,8 +222,22 @@ namespace R_treeview_ex
             }
         }
 
+        public static List<Dictionary<string, string>> GetDictionaryList(DataTable dt)
+        {
+            return dt.AsEnumerable().Select(
+                row => dt.Columns.Cast<DataColumn>().ToDictionary(
+                    column => column.ColumnName,
+                    column => row[column].ToString()
+                    )).ToList();
+        }
 
-        public static DataFrame ConvertDataTable(DataTable tab)
+        public static Dictionary<string, object> GetDict(DataTable dt)
+        {
+            return dt.AsEnumerable().ToDictionary<DataRow, string, object>(row => row.Field<string>(0),
+                                        row => row.Field<object>(1));
+        }
+
+        public static DataFrame ConvertDT(DataTable tab)
         // Converts the .Net datatable to an R dataframe
         // Method 1
         {
@@ -267,7 +283,7 @@ namespace R_treeview_ex
         }
 
 
-        public static DataFrame ConvertDT(DataTable dt)
+        public static DataFrame ConvertDT2(DataTable dt)
         // Converts the .Net datatable to an R dataframe
         // Method 2
         {
@@ -326,7 +342,7 @@ namespace R_treeview_ex
 
             try
             {
-                df = MyFunctions._engine.CreateDataFrame(columns: columns, columnNames: columnNames, stringsAsFactors: false);
+                df = MyFunctions._engine.CreateDataFrame(columns: columns.ToArray(), columnNames: columnNames, stringsAsFactors: false);
                 MyFunctions._engine.SetSymbol("ds2", df);
 
             }
@@ -338,6 +354,46 @@ namespace R_treeview_ex
             return df;
 
         }
+
+        public static DataFrame ConvertDT3(DataTable dt)
+        // Converts the .Net datatable to an R dataframe
+        // Method 3
+        {
+            DataFrame df = MyFunctions._engine.Evaluate("df=NULL").AsDataFrame();
+
+            //var list = GetDataTableDictionaryList(dt);
+            var list = GetDict(dt);
+
+            var colNames = new List<string>() { "col1", "col2" };
+            IEnumerable[] columns = new IEnumerable[2];
+
+            columns[0] = list.Keys.ToArray();
+            columns[1] = list.Values.ToArray();
+
+            df = MyFunctions._engine.CreateDataFrame(columns, colNames.ToArray(), stringsAsFactors: false);
+            MyFunctions._engine.SetSymbol("ds3", df);
+
+            return df;
+        }
+
+        public static DataFrame ConvertDT4(DataTable dt)
+        // Converts the .Net datatable to an R dataframe
+        // Method 4
+        {
+            //DataFrame dframe = null;
+            DataFrame dframe = MyFunctions._engine.Evaluate("dframe=NULL").AsDataFrame();
+
+            for (int i = 0; i < dt.Rows.Count; i++)
+                for (int j = 0; j < dt.Columns.Count; j++)
+                {
+                    object o = dt.Rows[i].ItemArray[j];
+                    Console.WriteLine("Data item = {0}", j);
+                }
+
+            //dframe = MyFunctions._engine.Evaluate("dframe= as.data.frame(rbind(dframe,x)) ").AsDataFrame();
+            return dframe;
+        }
+
 
         public static class MyFunctions
         {

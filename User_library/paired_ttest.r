@@ -1,11 +1,11 @@
+## sets options
+options(scipen = 999)
+
 ## sets working dir
 #  setwd("C:\\Work\\VS_projects\\Projects\\R_treeview_ex\\User_library\\")
 
 ## runs file from command line
 #  source("paired_ttest.r",echo=TRUE)
-
-## Exports data from .Net program
-#  write.csv(dataset, "C:/Work/VS_projects/Projects/R_treeview_ex/Supplemental/testing.csv", quote=F, row.names=F)
 
 ## Sets seed for repetitive number generation
 set.seed(2820)
@@ -38,3 +38,5 @@ pstt2 <- data.frame(
 #  Must be sure to use 'relevel() to set which reference category in 'group' comes first
 t.test(weight ~ relevel(group, "preTest"), data = pstt2, paired = TRUE)
 
+## Export to csv file
+#  write.csv(pstt, "C:/Work/VS_projects/Projects/R_treeview_ex/Supplemental/pstt.csv", quote=F, row.names=F)
