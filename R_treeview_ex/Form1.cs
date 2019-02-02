@@ -9,6 +9,7 @@ using System.Linq.Expressions;
 using System.Windows;
 using System.Windows.Forms;
 using System.Data;
+using System.Data.OleDb;
 using System.Drawing;
 using System.Text;
 using RDotNet;
@@ -33,7 +34,12 @@ namespace R_treeview_ex
             MyFunctions.InitializeRDotNet();
 
             // Populate the treeview with 'Supplemental Path'
-            string folderPath = Path.GetFullPath(Path.Combine(Application.StartupPath, @"..\..\..\..\")) + @"User_library";
+            // 64 bit
+            //string folderPath = Path.GetFullPath(Path.Combine(Application.StartupPath, @"..\..\..\..\")) + @"User_library";
+
+            // Any CPU
+            string folderPath = Path.GetFullPath(Path.Combine(Application.StartupPath, @"..\..\..\")) + @"User_library";
+
             ListDirectory(treeView1, folderPath);
             //ListDirectory(treeView1, @"C:\Work\VS_projects\Projects\R_treeview_ex\User_library");
 
@@ -171,10 +177,14 @@ namespace R_treeview_ex
             try
             {
                 string sFileNameNet = "";
+                string sFilePath = "";
+                string sPathToCSV = "";
                 dataGridView1.DataSource = null;
                 dataGridView1.Rows.Clear();
                 dataGridView1.Columns.Clear();
                 dataGridView1.Refresh();
+                DataTable netData = new DataTable();
+
 
                 OpenFileDialog dialogNet = new OpenFileDialog
                 {
@@ -185,31 +195,68 @@ namespace R_treeview_ex
                 if (dialogNet.ShowDialog() == DialogResult.OK)
                 {
                     //btnChooseFileR.Enabled = false;
-                    sFileNameNet = dialogNet.FileName;
-                    using (StreamReader sr = new StreamReader(sFileNameNet))
+                    sFilePath = dialogNet.FileName;
+                    sPathToCSV = Path.GetDirectoryName(sFilePath);
+                    sFileNameNet = Path.GetFileName(sFilePath);
+
+                    string sConnString = String.Format("Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + sPathToCSV + ";Extended Properties='text;HDR=Yes';");
+                    string sSqlSelect = String.Format("SELECT * FROM [" + sFileNameNet + "]");
+
+                    using (OleDbConnection conn = new OleDbConnection(sConnString))
+
+                    using (OleDbCommand command = new OleDbCommand(sSqlSelect, conn))
+
+                    using (OleDbDataAdapter adapter = new OleDbDataAdapter(command))
                     {
-                        DataTable netData = new DataTable();
-                        string[] headers = sr.ReadLine().Split(',');
-                        for (int i = 0; i < headers.Count(); i++)
+                        netData.Locale = CultureInfo.CurrentCulture;
+                        adapter.Fill(netData);
+
+                        for  (int i=0; i< netData.Rows.Count; i++)
                         {
-                            netData.Columns.Add(headers[i], typeof(string));
-                        }
-                        while (!sr.EndOfStream)
-                        {
-                            string[] rows = sr.ReadLine().Split(',');
-                            DataRow dr = netData.NewRow();
-                            for (int i = 0; i < rows.Count(); i++)
-                            {
-                                dr[i] = rows[i];
+                            for (int j = 0; j < netData.Columns.Count; j++)
+                            { 
+                                if (netData.Rows[i][j] == DBNull.Value)
+                                    netData.Rows[i][j] = double.NaN;
+                                netData.AcceptChanges();
+                                //Console.WriteLine("Row: (" + (i+1) + ") Col: (" + (j+1) + ") is: " + netData.Rows[i][j].ToString());
                             }
-                            netData.Rows.Add(dr);
                         }
+
                         dataGridView1.DataSource = netData.AsDataView();
-                        //ConvertDT(netData);    //Method 1
-                        //ConvertDT2(netData);   //Method 2
-                        //ConvertDT3(netData);   //Method 3
-                        ConvertDT4(netData);
+                        conn.Close();
                     }
+
+                    //ConvertDT(netData);    //Method 1
+                    ConvertDT2(netData);   //Method 2
+                    //ConvertDT3(netData);   //Method 3
+                    //ConvertDT4(netData);
+
+
+
+                    //using (StreamReader sr = new StreamReader(sFileNameNet))
+                    //{
+                    //    DataTable netData = new DataTable();
+                    //    string[] headers = sr.ReadLine().Split(',');
+                    //    for (int i = 0; i < headers.Count(); i++)
+                    //    {
+                    //        netData.Columns.Add(headers[i], typeof(string));
+                    //    }
+                    //    while (!sr.EndOfStream)
+                    //    {
+                    //        string[] rows = sr.ReadLine().Split(',');
+                    //        DataRow dr = netData.NewRow();
+                    //        for (int i = 0; i < rows.Count(); i++)
+                    //        {
+                    //            dr[i] = rows[i];
+                    //        }
+                    //        netData.Rows.Add(dr);
+                    //    }
+                    //    dataGridView1.DataSource = netData.AsDataView();
+                    //    //ConvertDT(netData);    //Method 1
+                    //    ConvertDT2(netData);   //Method 2
+                    //    //ConvertDT3(netData);   //Method 3
+                    //    //ConvertDT4(netData);
+                    //}
                 }
                 else
                 {
@@ -228,10 +275,17 @@ namespace R_treeview_ex
                 row => dt.Columns.Cast<DataColumn>().ToDictionary(
                     column => column.ColumnName,
                     column => row[column].ToString()
-                    )).ToList();
+                    )).ToList();      //  Returns list of dictionaries
         }
 
-        public static Dictionary<string, object> GetDict(DataTable dt)
+        public static Dictionary<string, object> GetDictA(DataTable dt)
+        {
+            return dt.AsEnumerable()
+              .ToDictionary(row => row.Field<string>(0),
+                                        row => row.Field<object>(1));
+        }
+
+        public static Dictionary<string, object> GetDictB(DataTable dt)
         {
             return dt.AsEnumerable().ToDictionary<DataRow, string, object>(row => row.Field<string>(0),
                                         row => row.Field<object>(1));
@@ -290,6 +344,8 @@ namespace R_treeview_ex
             //DataFrame df = null;
             DataFrame df = MyFunctions._engine.Evaluate("df=NULL").AsDataFrame();
 
+            double n;
+
             IEnumerable[] columns = new IEnumerable[dt.Columns.Count];
             string[] columnNames = dt.Columns.Cast<DataColumn>()
                                    .Select(x => x.ColumnName)
@@ -300,12 +356,6 @@ namespace R_treeview_ex
             {
                 switch (Type.GetTypeCode(dt.Columns[i].DataType))
                 {
-                    case TypeCode.String:
-                        columns[i] = dt.Rows.Cast<DataRow>()
-                            .Select(row => row.Field<string>(i).Replace("\"", string.Empty))
-                            .ToArray();
-                        break;
-
                     case TypeCode.Double:
                         columns[i] = dt.Rows.Cast<DataRow>()
                             .Select(row => row.Field<double>(i))
@@ -327,6 +377,13 @@ namespace R_treeview_ex
                             .ToArray();
                         break;
 
+                    case TypeCode.String:
+                        columns[i] = dt.Rows.Cast<DataRow>()
+                            //.Select(row => row.Field<string>(i).Replace("\"", string.Empty))
+                            .Select(row => row.Field<string>(i))
+                            .ToArray();
+                        break;
+
                     default:
                         //columns[i] = dt.Rows.Cast<DataRow>().Select(row => row[i]).ToArray();
 
@@ -342,6 +399,7 @@ namespace R_treeview_ex
 
             try
             {
+
                 df = MyFunctions._engine.CreateDataFrame(columns: columns.ToArray(), columnNames: columnNames, stringsAsFactors: false);
                 MyFunctions._engine.SetSymbol("ds2", df);
 
@@ -361,8 +419,7 @@ namespace R_treeview_ex
         {
             DataFrame df = MyFunctions._engine.Evaluate("df=NULL").AsDataFrame();
 
-            //var list = GetDataTableDictionaryList(dt);
-            var list = GetDict(dt);
+            var list = GetDictA(dt);
 
             var colNames = new List<string>() { "col1", "col2" };
             IEnumerable[] columns = new IEnumerable[2];
@@ -387,7 +444,7 @@ namespace R_treeview_ex
                 for (int j = 0; j < dt.Columns.Count; j++)
                 {
                     object o = dt.Rows[i].ItemArray[j];
-                    Console.WriteLine("Data item = {0}", j);
+                    Console.WriteLine("Data item = {0}", o.ToString());
                 }
 
             //dframe = MyFunctions._engine.Evaluate("dframe= as.data.frame(rbind(dframe,x)) ").AsDataFrame();
