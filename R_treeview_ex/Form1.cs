@@ -19,6 +19,8 @@ namespace R_treeview_ex
 {
     public partial class R_Treeview : Form
     {
+        public string xmlLibPath = @"C:\\";
+
         public R_Treeview()
         {
             InitializeComponent();
@@ -39,30 +41,29 @@ namespace R_treeview_ex
 
             // Any CPU
             string folderPath = Path.GetFullPath(Path.Combine(Application.StartupPath, @"..\..\..\")) + @"User_library";
+            xmlLibPath = folderPath;
 
-            ListDirectory(treeView1, folderPath);
+            listDirectory(treeView1, xmlLibPath);
             //ListDirectory(treeView1, @"C:\Work\VS_projects\Projects\R_treeview_ex\User_library");
-
         }
 
-        // Used for treeview
-        private void ListDirectory(TreeView treeView, string path)
+        // Used for treeview - creates directory structure of user library
+        private void listDirectory(TreeView treeView, string path)
         {
             treeView.Nodes.Clear();
             var fileDirectory = new DirectoryInfo(path);
 
-
-            treeView.Nodes.Add(CreateDirectory(fileDirectory));
+            treeView.Nodes.Add(createDirectory(fileDirectory));
         }
 
-        // Used for treeview - creates list files
-        private static TreeNode CreateDirectory(DirectoryInfo directoryInfo)
+        // Used for treeview - creates list of xml files
+        private static TreeNode createDirectory(DirectoryInfo directoryInfo)
         {
             var directoryNode = new TreeNode(directoryInfo.Name);
 
             foreach (var directory in directoryInfo.GetDirectories())
             {
-                directoryNode.Nodes.Add(CreateDirectory(directory));
+                directoryNode.Nodes.Add(createDirectory(directory));
             }
 
             foreach (var file in directoryInfo.GetFiles())
@@ -72,9 +73,17 @@ namespace R_treeview_ex
                     directoryNode.Nodes.Add(new TreeNode(file.Name));
                 }
             }
-
             return directoryNode;
+        }
 
+
+        private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            TreeNode node = treeView1.SelectedNode;
+            if (node.Text.Contains("xml"))
+            {
+                Console.WriteLine(xmlLibPath + "\\" + node.Text);
+            }
         }
 
         private void btnChooseFileR_Click(object sender, EventArgs e)
@@ -498,5 +507,6 @@ namespace R_treeview_ex
             }
 
         }
+
     }
 }

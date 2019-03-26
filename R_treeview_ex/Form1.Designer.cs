@@ -40,9 +40,9 @@
             this.tabLog = new System.Windows.Forms.TabPage();
             this.tbLog = new System.Windows.Forms.TextBox();
             this.tabData = new System.Windows.Forms.TabPage();
+            this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.lblDataPathNet = new System.Windows.Forms.Label();
             this.btnChooseFileNet = new System.Windows.Forms.Button();
-            this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.tabControl1.SuspendLayout();
             this.tabCode.SuspendLayout();
             this.tabLog.SuspendLayout();
@@ -52,10 +52,12 @@
             // 
             // treeView1
             // 
+            this.treeView1.BackColor = System.Drawing.SystemColors.ControlLight;
             this.treeView1.Location = new System.Drawing.Point(9, 96);
             this.treeView1.Name = "treeView1";
             this.treeView1.Size = new System.Drawing.Size(144, 444);
             this.treeView1.TabIndex = 0;
+            this.treeView1.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.treeView1_AfterSelect);
             // 
             // lblDataPathR
             // 
@@ -166,6 +168,14 @@
             this.tabData.Text = "Data";
             this.tabData.UseVisualStyleBackColor = true;
             // 
+            // dataGridView1
+            // 
+            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridView1.Location = new System.Drawing.Point(4, 4);
+            this.dataGridView1.Name = "dataGridView1";
+            this.dataGridView1.Size = new System.Drawing.Size(520, 378);
+            this.dataGridView1.TabIndex = 2;
+            // 
             // lblDataPathNet
             // 
             this.lblDataPathNet.AutoSize = true;
@@ -183,14 +193,6 @@
             this.btnChooseFileNet.TabIndex = 0;
             this.btnChooseFileNet.Text = "Using .Net";
             this.btnChooseFileNet.Click += new System.EventHandler(this.btnChooseFileNet_Click);
-            // 
-            // dataGridView1
-            // 
-            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Location = new System.Drawing.Point(4, 4);
-            this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.Size = new System.Drawing.Size(520, 378);
-            this.dataGridView1.TabIndex = 2;
             // 
             // R_Treeview
             // 
@@ -221,9 +223,17 @@
 
         }
 
-        #endregion
+        private void TreeView1_NodeMouseClick(object sender, System.Windows.Forms.TreeNodeMouseClickEventArgs e)
+        {
+            throw new System.NotImplementedException();
+        }
 
-        private System.Windows.Forms.TreeView treeView1;
+        private void TreeView1_SelectItemChanged(object sender, System.Windows.Forms.TreeNodeMouseClickEventArgs e)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        #endregion
         private System.Windows.Forms.Label lblDataPathR;
         private System.Windows.Forms.Button btnChooseFileR;
         private System.Windows.Forms.Label lblStatTree;
@@ -238,6 +248,7 @@
         private System.Windows.Forms.Label lblDataPathNet;
         private System.Windows.Forms.Button btnChooseFileNet;
         private System.Windows.Forms.DataGridView dataGridView1;
+        public System.Windows.Forms.TreeView treeView1;
     }
 }
 
