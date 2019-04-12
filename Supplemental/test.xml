@@ -1,0 +1,15 @@
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+&lt;statistic&gt;
+	&lt;file_name&gt;Paired Samples T Test&lt;/file_name&gt;
+	&lt;description&gt;Conducts a paired-samples t-test&lt;/description&gt;
+	&lt;parameters&gt;
+		&lt;preTx&gt;Independent Var 1&lt;/preTx&gt;
+		&lt;postTx&gt;Independent Var 2&lt;/postTx&gt;
+	&lt;/parameters&gt;
+	&lt;code&gt;
+		#This R code will create the data found in the accompanying
+		#CSV file
+		preTreat &lt;- c(rnorm(1000, mean = 145, sd = 9))
+		postTreat &lt;- c(rnorm(1000, mean = 138, sd = 8))	
+	&lt;/code&gt;
+&lt;/statistic&gt;

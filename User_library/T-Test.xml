@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<statistic>
+	<name>Indendent Samples T Test</name>
+	<description>This program run an independent samples t-test</description>
+	<parameters>
+		<p1>women_wt</p1>
+		<p2>men_wt</p2>
+	</parameters>
+	<rcode>
+		# Data in two numeric vectors
+		women_wt <- c(38.9, 61.2, 73.3, 21.8, 63.4, 64.6, 48.4, 48.8, 48.5)
+		men_wt <- c(67.8, 60, 63.4, 76, 89.4, 73.3, 67.3, 61.3, 62.4) 
+	</rcode>		
+</statistic>

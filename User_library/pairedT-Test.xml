@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <statistic>
 	<name>Paired Samples T Test</name>
-	<desc>Conducts a paired-samples t-test</desc>
+	<description>Conducts a paired-samples t-test</description>
 	<parameters>
 		<preTx>Independent Var 1</preTx>
 		<postTx>Independent Var 2</postTx>
 	</parameters>
-	<notes>
-		This R code will create the data found in the accompanying
-		CSV file
+	<rcode>
+		#This R code will create the data found in the accompanying
+		#CSV file
 		preTreat <- c(rnorm(1000, mean = 145, sd = 9))
 		postTreat <- c(rnorm(1000, mean = 138, sd = 8))	
-	</notes>
+	</rcode>
 </statistic>

@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Security;
 using System.Reflection;
 using System.IO;
+using System.Xml;
+using System.Xml.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -20,6 +23,7 @@ namespace R_treeview_ex
     public partial class R_Treeview : Form
     {
         public string xmlLibPath = @"C:\\";
+        public string xmlFileName = "";
 
         public R_Treeview()
         {
@@ -82,8 +86,61 @@ namespace R_treeview_ex
             TreeNode node = treeView1.SelectedNode;
             if (node.Text.Contains("xml"))
             {
-                Console.WriteLine(xmlLibPath + "\\" + node.Text);
+                xmlFileName = xmlLibPath + "\\" + node.Text;
+                //Console.WriteLine(xmlFileName);
             }
+
+            // Call xml file reader
+            loadXML();
+        }
+
+        private void loadXML()
+        {
+            // Must remove invalid XML chars
+            // Read in XML
+            string fixedXML = System.IO.File.ReadAllText(xmlFileName).Replace("<-", "&lt;-");
+
+            // Encode original XML
+            //string encodedXML = System.Security.SecurityElement.Escape(origXML);
+            //Console.WriteLine(encodedXML);
+
+
+            // For an XML file, use Load
+            //XDocument doc = XDocument.Load(xmlFileName);
+
+            // For an XML string, use Parse
+            //XDocument doc = XDocument.Parse(encodedXML);
+            XDocument doc = XDocument.Parse(fixedXML);
+
+            //  To get individual node information
+            var xNodes = from r in doc.Descendants("statistic")
+                         select new
+                         {
+                             pgm_name = r.Element("name").Value,
+                             description = r.Element("description").Value,
+                             rcode = r.Element("rcode").Value
+                         };
+
+            //  To get a list of values from a repeating node
+            List<string> paramList = doc.Element("statistic").Elements("parameters")
+                .Where(p => p.Elements("parameters") != null)
+                .Elements()
+                .Select(p => p.Value).ToList();
+
+            string sDropDown = string.Join(",", paramList);
+
+            //  Clear tab for each click
+            tbLog.Text = "";
+
+            foreach (var r in xNodes)
+            {
+                Console.WriteLine(r.pgm_name + "\r\n" + r.description + "\r\n" + r.rcode + "\r\n");
+            }
+
+            //foreach (var l in xVars)
+            //{
+                Console.WriteLine("parameters: " + sDropDown + Environment.NewLine);
+            //}
         }
 
         private void btnChooseFileR_Click(object sender, EventArgs e)
@@ -353,7 +410,7 @@ namespace R_treeview_ex
             //DataFrame df = null;
             DataFrame df = MyFunctions._engine.Evaluate("df=NULL").AsDataFrame();
 
-            double n;
+            //double n;
 
             IEnumerable[] columns = new IEnumerable[dt.Columns.Count];
             string[] columnNames = dt.Columns.Cast<DataColumn>()
