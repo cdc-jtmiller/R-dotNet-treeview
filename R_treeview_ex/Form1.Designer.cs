@@ -43,6 +43,7 @@
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.lblDataPathNet = new System.Windows.Forms.Label();
             this.btnChooseFileNet = new System.Windows.Forms.Button();
+            this.btnCloseTab = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.tabCode.SuspendLayout();
             this.tabLog.SuspendLayout();
@@ -194,11 +195,22 @@
             this.btnChooseFileNet.Text = "Using .Net";
             this.btnChooseFileNet.Click += new System.EventHandler(this.btnChooseFileNet_Click);
             // 
+            // btnCloseTab
+            // 
+            this.btnCloseTab.Location = new System.Drawing.Point(414, 515);
+            this.btnCloseTab.Name = "btnCloseTab";
+            this.btnCloseTab.Size = new System.Drawing.Size(96, 25);
+            this.btnCloseTab.TabIndex = 10;
+            this.btnCloseTab.Text = "Close Tab";
+            this.btnCloseTab.UseVisualStyleBackColor = true;
+            this.btnCloseTab.Click += new System.EventHandler(this.btnCloseTab_Click);
+            // 
             // R_Treeview
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(730, 546);
+            this.Controls.Add(this.btnCloseTab);
             this.Controls.Add(this.btnChooseFileNet);
             this.Controls.Add(this.lblDataPathNet);
             this.Controls.Add(this.tabControl1);
@@ -249,6 +261,7 @@
         private System.Windows.Forms.Button btnChooseFileNet;
         private System.Windows.Forms.DataGridView dataGridView1;
         public System.Windows.Forms.TreeView treeView1;
+        private System.Windows.Forms.Button btnCloseTab;
     }
 }
 

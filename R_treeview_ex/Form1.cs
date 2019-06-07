@@ -24,11 +24,17 @@ namespace R_treeview_ex
     {
         public string xmlLibPath = @"C:\\";
         public string xmlFileName = "";
+        public int xmlCount = 0;
+        private int currentTabPage { get; set; }
 
         public R_Treeview()
         {
             InitializeComponent();
-            tabControl1.Selected += new TabControlEventHandler(tabControl1_Selected);
+            //tabControl1.Selected += new TabControlEventHandler(tabControl1_Selected);
+            tabControl1.SelectedIndexChanged += tabControl1_SelectedIndexChanged;
+            //btnCloseTab.Click += new EventHandler(btnCloseTab_Click);
+
+
         }
 
         private void R_Treeview_Load(object sender, EventArgs e)
@@ -49,6 +55,8 @@ namespace R_treeview_ex
 
             listDirectory(treeView1, xmlLibPath);
             //ListDirectory(treeView1, @"C:\Work\VS_projects\Projects\R_treeview_ex\User_library");
+
+            checkTabCount();
         }
 
         // Used for treeview - creates directory structure of user library
@@ -90,15 +98,99 @@ namespace R_treeview_ex
                 //Console.WriteLine(xmlFileName);
             }
 
-            // Call xml file reader
-            loadXML();
+            // Call xml file parser
+            //   - get needed parameters
+            parseXML(out int cntParams, out string lstParams, out string RpgmName, out string Rpgm);
+
+            tabControl1.TabPages.Add(RpgmName);  // Create a new tab--.text is RpgmName. .Name is null
+            
+
+            // Name tabs same as the text of the tabs
+            int tabCnt = tabControl1.TabPages.Count;
+
+            for (int i = 0; i < (tabCnt);  i++ )
+            {
+                tabControl1.TabPages[i].Name = tabControl1.TabPages[i].Text;
+            }
+
+            tabControl1.SelectedTab = tabControl1.TabPages[RpgmName];
+
+            //Button btnCloseTab = new Button {
+            //                            Size = new Size(50,25),
+            //                            Location = new Point(470,354),
+            //                            Text = "Close",
+            //                            AutoSize=false
+            //                            };
+
+
+            //tabControl1.TabPages[RpgmName].Controls.Add(btnCloseTab);
         }
 
-        private void loadXML()
+        private void btnCloseTab_Click(object sender, EventArgs e)
+        {
+            tabControl1.TabPages.Remove(tabControl1.SelectedTab);
+            tabControl1.SelectedIndex = 1;
+            //checkTabCount();
+        }
+
+        private void checkTabCount()
+        {
+            int tabCnt2 = tabControl1.TabPages.Count;
+            if (tabCnt2 <= 3)
+            {
+                btnCloseTab.Visible = false;
+            }
+            else
+            {
+                btnCloseTab.Visible = true;
+            }
+        }
+
+        private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            currentTabPage = tabControl1.SelectedIndex;
+            Console.WriteLine("The current tab page is: " + currentTabPage);
+
+            switch ((sender as TabControl).SelectedIndex)
+            {
+                case 0:
+                    btnSubmit.Enabled = true;
+                    break;
+                case 1:
+                    btnSubmit.Enabled = false;
+                    break;
+                default:
+                    tabControl1.SelectedIndex = currentTabPage;
+                    break;
+            }
+
+            checkTabCount();
+
+        }
+
+        //private void tabControl1_Selected(object sender, TabControlEventArgs e)
+        //{
+        //    Console.WriteLine("The current tab page is: " + CurrentTabPage);
+        //    switch ((sender as TabControl).SelectedIndex)
+        //    {
+        //        case 0:
+        //            btnSubmit.Enabled = true;
+        //            break;
+        //        case 1:
+        //            btnSubmit.Enabled = false;
+        //            break;
+        //        default:
+        //            tabControl1.SelectedIndex = CurrentTabPage;
+        //            break;
+        //    }
+        //}
+
+        public void parseXML(out int cntParams, out string lstParams, out string RpgmName, out string Rpgm)
         {
             // Must remove invalid XML chars
             // Read in XML
             string fixedXML = System.IO.File.ReadAllText(xmlFileName).Replace("<-", "&lt;-");
+            string list = "";
 
             // Encode original XML
             //string encodedXML = System.Security.SecurityElement.Escape(origXML);
@@ -116,10 +208,13 @@ namespace R_treeview_ex
             var xNodes = from r in doc.Descendants("statistic")
                          select new
                          {
-                             pgm_name = r.Element("name").Value,
-                             description = r.Element("description").Value,
-                             rcode = r.Element("rcode").Value
+                             pgmName = r.Element("name"),
+                             description = r.Element("description"),
+                             rcode = r.Element("rcode")
                          };
+
+            RpgmName = doc.Descendants("statistic").Elements("name").Single().Value.ToString() ;
+            Rpgm = doc.Descendants("statistic").Elements("rcode").Single().Value.ToString();
 
             //  To get a list of values from a repeating node
             List<string> paramList = doc.Element("statistic").Elements("parameters")
@@ -127,20 +222,23 @@ namespace R_treeview_ex
                 .Elements()
                 .Select(p => p.Value).ToList();
 
-            string sDropDown = string.Join(",", paramList);
+            //  Get the count for the number of drop-downs needed on the new tab
+            cntParams = doc.Descendants("parameters")
+                        .SelectMany(item=>item.Descendants()).Count();
+
+            list = string.Join(",", paramList);
+            //lstParams = "'" + list.Replace(",", "','") + "'";
+            lstParams = string.Join(",", list.Split(',').Select(x => string.Format("'{0}'", x)).ToList());
 
             //  Clear tab for each click
             tbLog.Text = "";
 
             foreach (var r in xNodes)
             {
-                Console.WriteLine(r.pgm_name + "\r\n" + r.description + "\r\n" + r.rcode + "\r\n");
+                Console.WriteLine(r.pgmName + "\r\n" + r.description + "\r\n" + r.rcode + "\r\n");
             }
 
-            //foreach (var l in xVars)
-            //{
-                Console.WriteLine("parameters: " + sDropDown + Environment.NewLine);
-            //}
+            Console.WriteLine("parameters: " + lstParams + Environment.NewLine + "Count: " + cntParams.ToString());
         }
 
         private void btnChooseFileR_Click(object sender, EventArgs e)
@@ -182,20 +280,7 @@ namespace R_treeview_ex
                 Console.WriteLine("Error loading data using R: " + ex.Message);
             }
         }
-
-        private void tabControl1_Selected(object sender, TabControlEventArgs e)
-        {
-            switch ((sender as TabControl).SelectedIndex)
-            {
-                case 0:
-                    btnSubmit.Enabled = true;
-                    break;
-                case 1:
-                    btnSubmit.Enabled = false;
-                    break;
-            }
-        }
-
+       
         private void btnClear_Click(object sender, EventArgs e)
         {
             if (tabControl1.SelectedIndex == 0)
