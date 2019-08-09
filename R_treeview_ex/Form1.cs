@@ -22,9 +22,11 @@ namespace R_treeview_ex
 {
     public partial class R_Treeview : Form
     {
-        public string xmlLibPath = @"C:\\";
-        public string xmlFileName = "";
-        public int xmlCount = 0;
+        //public string xmlLibPath = @"C:\\";
+        //public string xmlFileName = "";
+        
+        //public int xmlCount = 0;
+        DataTable netData = new DataTable();
         private int currentTabPage { get; set; }
 
         public R_Treeview()
@@ -51,9 +53,9 @@ namespace R_treeview_ex
 
             // Any CPU
             string folderPath = Path.GetFullPath(Path.Combine(Application.StartupPath, @"..\..\..\")) + @"User_library";
-            xmlLibPath = folderPath;
+            myGlobalVars.xmlLibPath = folderPath;
 
-            listDirectory(treeView1, xmlLibPath);
+            listDirectory(treeView1, myGlobalVars.xmlLibPath);
             //ListDirectory(treeView1, @"C:\Work\VS_projects\Projects\R_treeview_ex\User_library");
 
             checkTabCount();
@@ -94,7 +96,7 @@ namespace R_treeview_ex
             TreeNode node = treeView1.SelectedNode;
             if (node.Text.Contains("xml"))
             {
-                xmlFileName = xmlLibPath + "\\" + node.Text;
+                myGlobalVars.xmlFileName = myGlobalVars.xmlLibPath + "\\" + node.Text;
                 //Console.WriteLine(xmlFileName);
             }
 
@@ -104,16 +106,48 @@ namespace R_treeview_ex
 
             tabControl1.TabPages.Add(RpgmName);  // Create a new tab--.text is RpgmName. .Name is null
             
-
+            // T A B S
             // Name tabs same as the text of the tabs
             int tabCnt = tabControl1.TabPages.Count;
 
-            for (int i = 0; i < (tabCnt);  i++ )
+            for (int i = 0; i < tabCnt;  i++ )
             {
                 tabControl1.TabPages[i].Name = tabControl1.TabPages[i].Text;
             }
 
             tabControl1.SelectedTab = tabControl1.TabPages[RpgmName];
+
+            //  C O M B O   B O X E S
+            //  Add number of comboboxes found in XML 'parameter' node
+            //  Use parameters in XML to create labels for combos
+
+            for (int p = 0; p < cntParams; p++) 
+            {
+                string ctlName = ("cboParams_" + p.ToString());
+                string lblText = ("lblParams_"  + p.ToString());
+                string[] lblNames = lstParams.Split(',');
+                int Y = p * 27 + 10;
+
+                ComboBox cboParams = new ComboBox();
+                Label lblParams = new Label();
+
+                cboParams.Name = ctlName;
+                cboParams.Width = 300;
+                cboParams.Height = 25;
+                cboParams.Location = new Point(150, Y);
+                cboParams.DataSource = myGlobalVars.colList;
+
+                lblParams.Name = lblText;
+                string tmpLabel = lblNames[p].Trim(new char[] { (char)39 }).ToString();
+                int lblLen = tmpLabel.Length;
+                lblParams.Width = 100;
+                lblParams.Height = 25;
+                lblParams.Location = new Point(10, Y);
+                lblParams.Text = tmpLabel;
+               
+                tabControl1.TabPages[RpgmName].Controls.Add(cboParams);
+                tabControl1.TabPages[RpgmName].Controls.Add(lblParams);
+            }
 
             //Button btnCloseTab = new Button {
             //                            Size = new Size(50,25),
@@ -189,7 +223,7 @@ namespace R_treeview_ex
         {
             // Must remove invalid XML chars
             // Read in XML
-            string fixedXML = System.IO.File.ReadAllText(xmlFileName).Replace("<-", "&lt;-");
+            string fixedXML = System.IO.File.ReadAllText(myGlobalVars.xmlFileName).Replace("<-", "&lt;-");
             string list = "";
 
             // Encode original XML
@@ -216,7 +250,7 @@ namespace R_treeview_ex
             RpgmName = doc.Descendants("statistic").Elements("name").Single().Value.ToString() ;
             Rpgm = doc.Descendants("statistic").Elements("rcode").Single().Value.ToString();
 
-            //  To get a list of values from a repeating node
+            //  To get a list of values from the parameter node
             List<string> paramList = doc.Element("statistic").Elements("parameters")
                 .Where(p => p.Elements("parameters") != null)
                 .Elements()
@@ -334,7 +368,7 @@ namespace R_treeview_ex
                 dataGridView1.Rows.Clear();
                 dataGridView1.Columns.Clear();
                 dataGridView1.Refresh();
-                DataTable netData = new DataTable();
+                //DataTable netData = new DataTable();
 
 
                 OpenFileDialog dialogNet = new OpenFileDialog
@@ -442,7 +476,7 @@ namespace R_treeview_ex
                                         row => row.Field<object>(1));
         }
 
-        public static DataFrame ConvertDT(DataTable tab)
+        public static DataFrame ConvertDT(DataTable dt)
         // Converts the .Net datatable to an R dataframe
         // Method 1
         {
@@ -454,11 +488,11 @@ namespace R_treeview_ex
             DataFrame dframe = MyFunctions._engine.Evaluate("dframe=NULL").AsDataFrame();
 
             int irow = 0;
-            foreach (DataRow row in tab.Rows)
+            foreach (DataRow row in dt.Rows)
             {
                 NumericVector x = MyFunctions._engine.Evaluate("x=NULL").AsNumeric();
                 int icol = 0;
-                foreach (DataColumn col in tab.Columns)
+                foreach (DataColumn col in dt.Columns)
                 {
                     if (col.DataType.Equals(typeof(string)))
                     {
@@ -502,6 +536,7 @@ namespace R_treeview_ex
                                    .Select(x => x.ColumnName)
                                    .ToArray();
 
+            myGlobalVars.colList = columnNames;
 
             for (int i = 0; i < dt.Columns.Count; i++)
             {
@@ -602,7 +637,13 @@ namespace R_treeview_ex
             return dframe;
         }
 
+        public static class myGlobalVars
+        {
+            public static string[] colList = new string[] {};
+            public static string xmlLibPath = @"C:\\";
+            public static string xmlFileName = "";
 
+        }
         public static class MyFunctions
         {
             public static REngine _engine;
@@ -621,6 +662,7 @@ namespace R_treeview_ex
                     Console.WriteLine("Error using RDotNet: " + ex.Message);
                 }
             }
+
         }
 
         public class ControlWriter : TextWriter
