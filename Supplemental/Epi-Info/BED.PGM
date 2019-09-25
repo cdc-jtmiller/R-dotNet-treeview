@@ -1,0 +1,12 @@
+* OPEN DATA SET (SET PATH FIRST)
+read bed
+
+TITLE 1 DESCRIBE INDIVIDUAL VARIABLES
+means BED80 /n
+means BED86 /n
+
+TITLE 1 CREATE AND DEFINE DELTA; ANALYZE DELTA
+define delta ##.#
+delta = bed80 - bed86
+means delta /n
+

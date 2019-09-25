@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<statistic>
+	<name>Normal_data</name>
+	<description>This program creates a dataset based on the normal curve</description>
+	<parameters>
+		<n>var_1</n>
+		<mean>var_2</mean>
+		<sd>var_3</sd>
+	</parameters>
+	<rcode>
+		# Normalized data set for testing
+		EIRnorm <- function(var_1,var_2,var_3) {var_2+var_3*scale(rnorm(var_1))}
+		x <- EIRnorm(1000,100,15)
+		library(pastecs)
+		stat.desc(x)		# Create a data frame
+		df <- data.frame
+ 	</rcode>		
+</statistic>

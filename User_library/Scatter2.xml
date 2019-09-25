@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<statistic>
+	<name>Scatter Plot</name>
+	<description>This program creates a simple scatter plot</description>
+	<parameters>
+		<Xvar>X Variable</Xvar>
+		<Yvar>Y Variable</Yvar>
+	</parameters>
+	<rcode>
+		# Where am I?
+		getwd()
+		# List files in the 'Programs' folder
+		#list.files("Programs")
+		# Bring in data
+		#dataset = read.csv("data-marketing-budget-12mo.csv", header=T,
+		# Scatter plot of Independents vs Dependent
+		library(ggplot2)
+		ggplot(data = df, aes(x = Xvar, y = Yvar)) + geom_point() 	
+	</rcode>		
+</statistic>

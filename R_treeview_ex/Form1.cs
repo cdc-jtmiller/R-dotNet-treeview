@@ -57,6 +57,8 @@ namespace R_treeview_ex
 
             listDirectory(treeView1, myGlobalVars.xmlLibPath);
             //ListDirectory(treeView1, @"C:\Work\VS_projects\Projects\R_treeview_ex\User_library");
+            btnCreateR.Visible = false;
+            btnCreateR.Enabled = false;
 
             checkTabCount();
         }
@@ -91,6 +93,64 @@ namespace R_treeview_ex
         }
 
 
+        private void parseXML(out int cntParams, out string lstParams, out string RpgmName, out string Rpgm)
+        {
+            // Must remove invalid XML chars
+            // Read in XML
+            string fixedXML = System.IO.File.ReadAllText(myGlobalVars.xmlFileName).Replace("<-", "&lt;-");
+            string list = "";
+
+            // Encode original XML
+            //string encodedXML = System.Security.SecurityElement.Escape(origXML);
+            //Console.WriteLine(encodedXML);
+
+
+            // For an XML file, use Load
+            //XDocument doc = XDocument.Load(xmlFileName);
+
+            // For an XML string, use Parse
+            //XDocument doc = XDocument.Parse(encodedXML);
+            XDocument doc = XDocument.Parse(fixedXML);
+
+            //  To get individual node information
+            var xNodes = from r in doc.Descendants("statistic")
+                         select new
+                         {
+                             pgmName = r.Element("name"),
+                             description = r.Element("description"),
+                             rcode = r.Element("rcode")
+                         };
+
+            RpgmName = doc.Descendants("statistic").Elements("name").Single().Value.ToString();
+            Rpgm = doc.Descendants("statistic").Elements("rcode").Single().Value.ToString();
+            myGlobalVars.rCode = Rpgm;
+            
+
+            //  To get a list of values from the parameter node
+            List<string> paramList = doc.Element("statistic").Elements("parameters")
+                .Where(p => p.Elements("parameters") != null)
+                .Elements()
+                .Select(p => p.Value).ToList();
+
+            //  Get the count for the number of drop-downs needed on the new tab
+            cntParams = doc.Descendants("parameters")
+                        .SelectMany(item => item.Descendants()).Count();
+
+            list = string.Join(",", paramList);
+            //lstParams = "'" + list.Replace(",", "','") + "'";
+            lstParams = string.Join(",", list.Split(',').Select(x => string.Format("'{0}'", x)).ToList());
+
+            //  Clear tab for each click
+            tbLog.Text = "";
+
+            foreach (var r in xNodes)
+            {
+                Console.WriteLine(r.pgmName + "\r\n" + r.description + "\r\n" + r.rcode + "\r\n");
+            }
+
+            Console.WriteLine("parameters: " + lstParams + Environment.NewLine + "Count: " + cntParams.ToString());
+        }
+
         private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
         {
             TreeNode node = treeView1.SelectedNode;
@@ -119,7 +179,7 @@ namespace R_treeview_ex
 
             //  C O M B O   B O X E S
             //  Add number of comboboxes found in XML 'parameter' node
-            //  Use parameters in XML to create labels for combos
+            //  Use element tags for var names and elements to create labels for combos
 
             for (int p = 0; p < cntParams; p++) 
             {
@@ -135,7 +195,6 @@ namespace R_treeview_ex
                 cboParams.Width = 300;
                 cboParams.Height = 25;
                 cboParams.Location = new Point(150, Y);
-                cboParams.DataSource = myGlobalVars.colList;
 
                 lblParams.Name = lblText;
                 string tmpLabel = lblNames[p].Trim(new char[] { (char)39 }).ToString();
@@ -149,15 +208,20 @@ namespace R_treeview_ex
                 tabControl1.TabPages[RpgmName].Controls.Add(lblParams);
             }
 
-            //Button btnCloseTab = new Button {
-            //                            Size = new Size(50,25),
-            //                            Location = new Point(470,354),
-            //                            Text = "Close",
-            //                            AutoSize=false
-            //                            };
+            btnCreateR.Visible = true;
+            btnCreateR.Enabled = true;
+
+            foreach (Control c in tabControl1.TabPages[RpgmName].Controls)
+            {
+                if (c is ComboBox)
+                {
+                    (c as ComboBox).BindingContext = new BindingContext();
+                    (c as ComboBox).DataSource = myGlobalVars.colList;
+                }
+            }
 
 
-            //tabControl1.TabPages[RpgmName].Controls.Add(btnCloseTab);
+
         }
 
         private void btnCloseTab_Click(object sender, EventArgs e)
@@ -165,6 +229,8 @@ namespace R_treeview_ex
             tabControl1.TabPages.Remove(tabControl1.SelectedTab);
             tabControl1.SelectedIndex = 1;
             //checkTabCount();
+            btnCreateR.Visible = false;
+            btnCreateR.Enabled = false;
         }
 
         private void checkTabCount()
@@ -219,61 +285,6 @@ namespace R_treeview_ex
         //    }
         //}
 
-        public void parseXML(out int cntParams, out string lstParams, out string RpgmName, out string Rpgm)
-        {
-            // Must remove invalid XML chars
-            // Read in XML
-            string fixedXML = System.IO.File.ReadAllText(myGlobalVars.xmlFileName).Replace("<-", "&lt;-");
-            string list = "";
-
-            // Encode original XML
-            //string encodedXML = System.Security.SecurityElement.Escape(origXML);
-            //Console.WriteLine(encodedXML);
-
-
-            // For an XML file, use Load
-            //XDocument doc = XDocument.Load(xmlFileName);
-
-            // For an XML string, use Parse
-            //XDocument doc = XDocument.Parse(encodedXML);
-            XDocument doc = XDocument.Parse(fixedXML);
-
-            //  To get individual node information
-            var xNodes = from r in doc.Descendants("statistic")
-                         select new
-                         {
-                             pgmName = r.Element("name"),
-                             description = r.Element("description"),
-                             rcode = r.Element("rcode")
-                         };
-
-            RpgmName = doc.Descendants("statistic").Elements("name").Single().Value.ToString() ;
-            Rpgm = doc.Descendants("statistic").Elements("rcode").Single().Value.ToString();
-
-            //  To get a list of values from the parameter node
-            List<string> paramList = doc.Element("statistic").Elements("parameters")
-                .Where(p => p.Elements("parameters") != null)
-                .Elements()
-                .Select(p => p.Value).ToList();
-
-            //  Get the count for the number of drop-downs needed on the new tab
-            cntParams = doc.Descendants("parameters")
-                        .SelectMany(item=>item.Descendants()).Count();
-
-            list = string.Join(",", paramList);
-            //lstParams = "'" + list.Replace(",", "','") + "'";
-            lstParams = string.Join(",", list.Split(',').Select(x => string.Format("'{0}'", x)).ToList());
-
-            //  Clear tab for each click
-            tbLog.Text = "";
-
-            foreach (var r in xNodes)
-            {
-                Console.WriteLine(r.pgmName + "\r\n" + r.description + "\r\n" + r.rcode + "\r\n");
-            }
-
-            Console.WriteLine("parameters: " + lstParams + Environment.NewLine + "Count: " + cntParams.ToString());
-        }
 
         private void btnChooseFileR_Click(object sender, EventArgs e)
         {
@@ -299,6 +310,7 @@ namespace R_treeview_ex
                     dataGridView1.RowCount++;
                     dataGridView1.Rows[i].HeaderCell.Value = df.RowNames[i];
 
+
                     for (int k = 0; k < df.ColumnCount; ++k)
                     {
                         if (df[i, k] != null)
@@ -307,6 +319,17 @@ namespace R_treeview_ex
                         }
                     }
                 }
+
+                string[] columnNames = dataGridView1.Columns.Cast<DataGridViewColumn>()
+                                       .Select(x => x.Name)
+                                       .ToArray();
+
+                // Must bind column names to global var for drop-downs later
+                myGlobalVars.colList = columnNames;
+
+
+                MyFunctions._engine.SetSymbol("df", df);
+
             }
 
             catch (Exception ex)
@@ -485,7 +508,7 @@ namespace R_treeview_ex
             //        .Select(row => Convert.ToDouble(row.Field<string>("column1"), System.Globalization.CultureInfo.InvariantCulture)).ToArray();
 
             //DataFrame dframe = null;
-            DataFrame dframe = MyFunctions._engine.Evaluate("dframe=NULL").AsDataFrame();
+            DataFrame df = MyFunctions._engine.Evaluate("dframe=NULL").AsDataFrame();
 
             int irow = 0;
             foreach (DataRow row in dt.Rows)
@@ -512,13 +535,13 @@ namespace R_treeview_ex
                     }
                     icol++;
                 }
-                dframe = MyFunctions._engine.Evaluate("dframe= as.data.frame(rbind(dframe,x)) ").AsDataFrame();
+                df = MyFunctions._engine.Evaluate("dframe= as.data.frame(rbind(dframe,x)) ").AsDataFrame();
                 irow++;
             }
 
-            MyFunctions._engine.SetSymbol("ds1", dframe);
+            MyFunctions._engine.SetSymbol("df", df);
 
-            return dframe;
+            return df;
         }
 
 
@@ -536,6 +559,7 @@ namespace R_treeview_ex
                                    .Select(x => x.ColumnName)
                                    .ToArray();
 
+            // Adds column names to global list to be used when creating drop-downs
             myGlobalVars.colList = columnNames;
 
             for (int i = 0; i < dt.Columns.Count; i++)
@@ -587,7 +611,7 @@ namespace R_treeview_ex
             {
 
                 df = MyFunctions._engine.CreateDataFrame(columns: columns.ToArray(), columnNames: columnNames, stringsAsFactors: false);
-                MyFunctions._engine.SetSymbol("ds2", df);
+                MyFunctions._engine.SetSymbol("df", df);
 
             }
             catch (Exception ex)
@@ -614,7 +638,7 @@ namespace R_treeview_ex
             columns[1] = list.Values.ToArray();
 
             df = MyFunctions._engine.CreateDataFrame(columns, colNames.ToArray(), stringsAsFactors: false);
-            MyFunctions._engine.SetSymbol("ds3", df);
+            MyFunctions._engine.SetSymbol("df", df);
 
             return df;
         }
@@ -624,7 +648,7 @@ namespace R_treeview_ex
         // Method 4
         {
             //DataFrame dframe = null;
-            DataFrame dframe = MyFunctions._engine.Evaluate("dframe=NULL").AsDataFrame();
+            DataFrame df = MyFunctions._engine.Evaluate("dframe=NULL").AsDataFrame();
 
             for (int i = 0; i < dt.Rows.Count; i++)
                 for (int j = 0; j < dt.Columns.Count; j++)
@@ -634,7 +658,10 @@ namespace R_treeview_ex
                 }
 
             //dframe = MyFunctions._engine.Evaluate("dframe= as.data.frame(rbind(dframe,x)) ").AsDataFrame();
-            return dframe;
+
+            MyFunctions._engine.SetSymbol("df", df);
+
+            return df;
         }
 
         public static class myGlobalVars
@@ -642,6 +669,7 @@ namespace R_treeview_ex
             public static string[] colList = new string[] {};
             public static string xmlLibPath = @"C:\\";
             public static string xmlFileName = "";
+            public static string rCode = "";
 
         }
         public static class MyFunctions

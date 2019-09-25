@@ -44,6 +44,7 @@
             this.lblDataPathNet = new System.Windows.Forms.Label();
             this.btnChooseFileNet = new System.Windows.Forms.Button();
             this.btnCloseTab = new System.Windows.Forms.Button();
+            this.btnCreateR = new System.Windows.Forms.Button();
             this.tabControl1.SuspendLayout();
             this.tabCode.SuspendLayout();
             this.tabLog.SuspendLayout();
@@ -205,11 +206,21 @@
             this.btnCloseTab.UseVisualStyleBackColor = true;
             this.btnCloseTab.Click += new System.EventHandler(this.btnCloseTab_Click);
             // 
+            // btnCreateR
+            // 
+            this.btnCreateR.Location = new System.Drawing.Point(177, 515);
+            this.btnCreateR.Name = "btnCreateR";
+            this.btnCreateR.Size = new System.Drawing.Size(96, 25);
+            this.btnCreateR.TabIndex = 11;
+            this.btnCreateR.Text = "Create R";
+            this.btnCreateR.UseVisualStyleBackColor = true;
+            // 
             // R_Treeview
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(730, 546);
+            this.Controls.Add(this.btnCreateR);
             this.Controls.Add(this.btnCloseTab);
             this.Controls.Add(this.btnChooseFileNet);
             this.Controls.Add(this.lblDataPathNet);
@@ -262,6 +273,7 @@
         private System.Windows.Forms.DataGridView dataGridView1;
         public System.Windows.Forms.TreeView treeView1;
         private System.Windows.Forms.Button btnCloseTab;
+        private System.Windows.Forms.Button btnCreateR;
     }
 }
 

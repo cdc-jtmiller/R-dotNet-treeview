@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<statistic>
+	<name>OLS_Regression</name>
+	<description>This program computes an OLS Regression equation.</description>
+	<parameters>
+		<Y>Dependent</Y>
+		<X1>Independent #1</X1>
+		<X2>Independent #2</X2>
+	</parameters>
+	<rcode>
+		# Where am I?
+		getwd()
+		# List files in the 'Programs' folder
+		list.files("Programs")
+		# Bring in data
+		dataset = read.csv("data-marketing-budget-12mo.csv", header=T,
+		# Scatter plot of Independents vs Dependent
+		ggplot(train, aes(TV, Sales)) +
+		geom_point() +
+		geom_smooth(method = "lm") +
+		geom_smooth(se = FALSE, color = "red")
+		
+		model <- lm(Y ~ X1 + X2, data = 
+		
+		stat.desc(x)		# Create a data frame
+		df <- data.frame
+ 	</rcode>		
+</statistic>
