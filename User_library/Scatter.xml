@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <statistic>
 	<name>Scatter Plot</name>
-	<description>This program takes in two variables to produce a scatter plot</description>
-	<dataframe>df</dataframe>
+	<description>This program creates a simple scatter plot</description>
 	<parameters>
-		<p1>Var1</p1>
-		<p2>Var2</p2>
+		<Xvar>X Variable</Xvar>
+		<Yvar>Y Variable</Yvar>
 	</parameters>
 	<rcode>
 		library(ggplot2)
-		ggplot(data = df, aes(x = x_var, y = y_var)) + geom_point()
-	</rcode>
+		ggplot(data = df, aes(x = Xvar, y = Yvar)) + geom_point() 	
+	</rcode>		
 </statistic>

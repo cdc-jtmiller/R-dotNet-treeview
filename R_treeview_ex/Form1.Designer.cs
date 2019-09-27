@@ -214,6 +214,7 @@
             this.btnCreateR.TabIndex = 11;
             this.btnCreateR.Text = "Create R";
             this.btnCreateR.UseVisualStyleBackColor = true;
+            this.btnCreateR.Click += new System.EventHandler(this.btnCreateR_Click);
             // 
             // R_Treeview
             // 

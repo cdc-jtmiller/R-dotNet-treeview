@@ -24,13 +24,14 @@ namespace R_treeview_ex
     {
         //public string xmlLibPath = @"C:\\";
         //public string xmlFileName = "";
-        
+
         //public int xmlCount = 0;
         DataTable netData = new DataTable();
         private int currentTabPage { get; set; }
 
         public R_Treeview()
         {
+            System.GC.Collect();
             InitializeComponent();
             //tabControl1.Selected += new TabControlEventHandler(tabControl1_Selected);
             tabControl1.SelectedIndexChanged += tabControl1_SelectedIndexChanged;
@@ -93,12 +94,17 @@ namespace R_treeview_ex
         }
 
 
-        private void parseXML(out int cntParams, out string lstParams, out string RpgmName, out string Rpgm)
+        private void parseXML(out int cntParams, 
+                              out string lstParams,
+                              out string[] arrElements,
+                              out string rPgmName, 
+                              out string rFromXML)
         {
             // Must remove invalid XML chars
             // Read in XML
             string fixedXML = System.IO.File.ReadAllText(myGlobalVars.xmlFileName).Replace("<-", "&lt;-");
-            string list = "";
+            string pList = "";
+            string eList = "";
 
             // Encode original XML
             //string encodedXML = System.Security.SecurityElement.Escape(origXML);
@@ -121,24 +127,31 @@ namespace R_treeview_ex
                              rcode = r.Element("rcode")
                          };
 
-            RpgmName = doc.Descendants("statistic").Elements("name").Single().Value.ToString();
-            Rpgm = doc.Descendants("statistic").Elements("rcode").Single().Value.ToString();
-            myGlobalVars.rCode = Rpgm;
+            rPgmName = doc.Descendants("statistic").Elements("name").Single().Value.ToString();
+            rFromXML = doc.Descendants("statistic").Elements("rcode").Single().Value.ToString();
+            myGlobalVars.rPgm = rFromXML;  //  Need to get full R program to manipulate later.
             
 
-            //  To get a list of values from the parameter node
+            //  To get a list of element values from the parameter node for use on combo box labels
             List<string> paramList = doc.Element("statistic").Elements("parameters")
                 .Where(p => p.Elements("parameters") != null)
                 .Elements()
                 .Select(p => p.Value).ToList();
 
+            //  Get list of element names to use in text replacement within code.
+            List<string> elemList = doc.Element("statistic").Elements("parameters")
+                .Where(e => e.Elements("parameters") != null)
+                .Elements()
+                .Select(e => e.Name.ToString()).ToList();
+
             //  Get the count for the number of drop-downs needed on the new tab
             cntParams = doc.Descendants("parameters")
                         .SelectMany(item => item.Descendants()).Count();
 
-            list = string.Join(",", paramList);
-            //lstParams = "'" + list.Replace(",", "','") + "'";
-            lstParams = string.Join(",", list.Split(',').Select(x => string.Format("'{0}'", x)).ToList());
+            pList = string.Join(",", paramList);
+            eList = string.Join(",", elemList);
+            lstParams = string.Join(",", pList.Split(',').Select(x => string.Format("'{0}'", x)).ToList());
+            arrElements = eList.Split(',').Select(sValue => sValue.Trim()).ToArray();
 
             //  Clear tab for each click
             tbLog.Text = "";
@@ -149,6 +162,7 @@ namespace R_treeview_ex
             }
 
             Console.WriteLine("parameters: " + lstParams + Environment.NewLine + "Count: " + cntParams.ToString());
+            Console.WriteLine("Elements: " + arrElements);
         }
 
         private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
@@ -162,7 +176,7 @@ namespace R_treeview_ex
 
             // Call xml file parser
             //   - get needed parameters
-            parseXML(out int cntParams, out string lstParams, out string RpgmName, out string Rpgm);
+            parseXML(out int cntParams, out string lstParams, out string[] arrElements, out string RpgmName, out string Rpgm);
 
             tabControl1.TabPages.Add(RpgmName);  // Create a new tab--.text is RpgmName. .Name is null
             
@@ -183,7 +197,8 @@ namespace R_treeview_ex
 
             for (int p = 0; p < cntParams; p++) 
             {
-                string ctlName = ("cboParams_" + p.ToString());
+                //string ctlName = ("cboParams_" + p.ToString());
+                string ctlName = arrElements[p].ToString();
                 string lblText = ("lblParams_"  + p.ToString());
                 string[] lblNames = lstParams.Split(',');
                 int Y = p * 27 + 10;
@@ -219,7 +234,34 @@ namespace R_treeview_ex
                     (c as ComboBox).DataSource = myGlobalVars.colList;
                 }
             }
+        }
 
+        private void btnCreateR_Click(object sender, EventArgs e)
+        {
+            string sFrom;
+            string sTo;
+            string tempRpgm = myGlobalVars.rPgm;
+            string tab = tabControl1.SelectedTab.Name;
+            string xx = @"library(ggplot2)
+                          ggplot(df, aes(x,y)) + geom_point() + geom_smooth()";
+
+            foreach (Control c in tabControl1.TabPages[tab].Controls)
+            {
+                if (c is ComboBox)
+                {
+                    sFrom = (c as ComboBox).Name.ToString();
+                    sTo = (c as ComboBox).SelectedItem.ToString();
+                    tempRpgm = tempRpgm.Replace(sFrom, sTo);
+                }
+            }
+
+            myGlobalVars.rPgm2Submit = tempRpgm;
+
+            Console.WriteLine("Code to submit: " + xx);
+
+            //MyFunctions._engine.Evaluate(xx);
+            MyFunctions._engine.Evaluate("library(ggplot2)");
+            MyFunctions._engine.Evaluate("ggplot(df, aes(x,y)) + geom_point() + geom_smooth()");
 
 
         }
@@ -669,7 +711,9 @@ namespace R_treeview_ex
             public static string[] colList = new string[] {};
             public static string xmlLibPath = @"C:\\";
             public static string xmlFileName = "";
-            public static string rCode = "";
+            public static string rPgm = "";
+            public static string rPgm2Submit = "";
+
 
         }
         public static class MyFunctions
